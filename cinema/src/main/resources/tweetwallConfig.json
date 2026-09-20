@@ -1,0 +1,155 @@
+{
+    "tweetwall": {
+        "query": "<YOUR_QUERY>",
+        "title": "The JavaFX Cinema Tweetwall for <YOUR_NAME_HERE>!",
+        "stylesheetResource": "tweetwall.css"
+    },
+
+    "stepEngine": {
+        "steps": [
+            {
+                "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
+                "config": {
+                    "layoutX": 35,
+                    "layoutY": 165,
+                    "width": 1860,
+                    "sessionHeight": 200,
+                    "showAvatar": true,
+                    "avatarArcSize": 16,
+                    "avatarSize": 60,
+                    "avatarSpacing": 4,
+                    "showFavourite": true,
+                    "stepDuration": 500,
+                    "circularAvatar": true,
+                    "compressedAvatars": true,
+                    "compressedAvatarsLimit": 4,
+                    "showTags": true,
+                    "columns": 4,
+                    "autoSeparateRoomTypes": true,
+                    "showCompanyName": true
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.stepengine.steps.PauseStep",
+                "config": {
+                    "amount": 15,
+                    "unit": "SECONDS"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.controls.steps.NodeFadeOutStep",
+                "config": {
+                    "nodeSelector": "#scheduleNode"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowTopRated",
+                "config": {
+                    "layoutX": 35,
+                    "layoutY": 165,
+                    "width": 800,
+                    "talkHeight": 125,
+                    "talkVGap": 5,
+                    "topVotedType": "TODAY",
+                    "stepDuration": 500,
+                    "skipTokenValue": "TopRatedToday"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.conference.impl.DevoxxPhotoSharingMosaicStep",
+                "config": {
+                    "layoutX": 900,
+                    "layoutY": 165,
+                    "width": 950,
+                    "height": 700,
+                    "columns": 3,
+                    "rows": 3,
+                    "skipWhenSkipped": "TopRatedToday"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.controls.steps.NodeFadeOutStep",
+                "config": {
+                    "nodeSelector": "#topRatedNode"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.conference.impl.DevoxxPhotoSharingMosaicStep",
+                "config": {
+                    "layoutX": 35,
+                    "layoutY": 165,
+                    "width": 1860,
+                    "height": 700,
+                    "columns": 6,
+                    "rows": 3
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
+                "config": {
+                    "layoutX": 35,
+                    "layoutY": 165,
+                    "width": 1860,
+                    "sessionHeight": 200,
+                    "showAvatar": true,
+                    "avatarArcSize": 16,
+                    "avatarSize": 60,
+                    "avatarSpacing": 4,
+                    "showFavourite": true,
+                    "stepDuration": 500,
+                    "circularAvatar": true,
+                    "compressedAvatars": true,
+                    "compressedAvatarsLimit": 4,
+                    "showTags": true,
+                    "columns": 4,
+                    "autoSeparateRoomTypes": true,
+                    "showCompanyName": true
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.stepengine.steps.PauseStep",
+                "config": {
+                    "amount": 15,
+                    "unit": "SECONDS"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.controls.steps.NodeFadeOutStep",
+                "config": {
+                    "nodeSelector": "#scheduleNode"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowTopRated",
+                "config": {
+                    "layoutX": 35,
+                    "layoutY": 165,
+                    "width": 800,
+                    "talkHeight": 125,
+                    "talkVGap": 5,
+                    "topVotedType": "WEEK",
+                    "stepDuration": 500,
+                    "skipTokenValue": "TopRatedWeek"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.conference.impl.DevoxxPhotoSharingMosaicStep",
+                "config": {
+                    "layoutX": 900,
+                    "layoutY": 165,
+                    "width": 950,
+                    "height": 700,
+                    "columns": 3,
+                    "rows": 3,
+                    "skipWhenSkipped": "TopRatedWeek"
+                }
+            },
+            {
+                "stepClassName": "org.tweetwallfx.controls.steps.NodeFadeOutStep",
+                "config": {
+                    "nodeSelector": "#topRatedNode"
+                }
+            }
+        ]
+    }
+}

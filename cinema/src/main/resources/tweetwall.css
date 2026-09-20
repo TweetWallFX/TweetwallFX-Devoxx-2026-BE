@@ -1,0 +1,275 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2019-2026 TweetWallFX
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+@font-face {
+    font-family: 'BebasNeue';
+    src: url('BebasNeue.otf');
+}
+
+@font-face {
+    font-family: 'BebasNeue Bold';
+    src: url('BebasNeue-Bold.otf');
+}
+
+@font-face {
+    font-family: 'Noto Emoji';
+    src: url('NotoEmoji-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'Twitter Color Emoji';
+    src: url('TwitterColorEmoji-SVGinOT.ttf');
+}
+
+.root {
+    -fx-font-family: 'System';
+    devoxx_gradient: linear-gradient(to bottom right, #e55630, #f68b1f);
+    devoxx_gradient_opaque: linear-gradient(to bottom right, rgba(229, 86, 48, 0.85) , rgba(246, 139, 31, 0.85));
+    devoxx_light_font_color: blanchedalmond;
+    devoxx_dark_font_color: #060b33;
+    devoxx_font_color: devoxx_light_font_color;
+}
+
+.text {
+    -fx-font-smoothing-type: gray;
+}
+
+.statusline {
+    /*-fx-font: 12px "Calibri";*/
+    -fx-text-fill: red !important;
+}
+
+.wordle {
+    -fx-graphic: none;
+    -fx-background-color: black;
+    -fx-background-graphic: url(DevoxxBelgium2024CinemaBackdrop-DevoxxLinks_v2.png);
+    -fx-display-tag-num: 25;
+    /*-fx-font: 12pt "BebasNeue";*/
+    -fx-font-size-min: 36;
+    -fx-font-size-max: 72;
+    -fx-tweet-font-size: 54;
+}
+
+.wordle .bg-image {
+    /*-fx-opacity: 0.4;*/
+}
+
+.wordle .secondlogo {
+    -fx-scale-x: 0.4;
+    -fx-scale-y: 0.4;
+    /*position: relative;*/
+    /*-fx-alignment: BOTTOM_RIGHT;*/
+    /*-fx-translate-x: +900;
+    -fx-translate-y: +100;*/
+}
+
+.wordle .logo {
+    /*visibility: hidden;*/
+    /*    -fx-scale-x: 0.7;
+        -fx-scale-y: 0.7;*/
+    /*-fx-translate-x: +50;*/
+    /*-fx-translate-y: -50;*/
+}
+
+.wordle .tag {
+    /*-fx-font-family: "Calibri";*/
+    -fx-fill: white  !important;
+    /*    -fx-stroke: black;
+        -fx-stroke-width: 0.5;    */
+    /*-fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.7) , 6, 0.0 , 0 , 2 );*/
+    /*-fx-effect: innershadow( three-pass-box , rgba(0,0,0,0.7) , 6, 0.0 , 0 , 2 );*/
+}
+
+.wordle .name {
+    -fx-font-size: 36px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.wordle .handle {
+    -fx-font-size: 28px;
+    -fx-text-fill: white;
+}
+
+.tweetUsername {
+    -fx-font: 1em 'Twitter Color Emoji';
+    -fx-fill: derive(blanchedalmond, +5%);
+}
+
+.tweetText {
+    -fx-font: 1.2em 'Twitter Color Emoji';
+    /*    -fx-font-family: 'Twitter Color Emoji';
+        -fx-font-size: 48pt;    */
+    -fx-fill: #060b33; /* derive(blanchedalmond, -5%);    */
+}
+
+/*.tweetFlow {
+    -fx-font-family: 'Twitter Color Emoji';
+    -fx-font-size: 1.5em;
+    -fx-fill: derive(blanchedalmond, -5%);
+}*/
+
+.tweetDisplay {
+    -fx-background-color: devoxx_gradient;
+    -fx-background-radius: 5;
+    /*-fx-background-insets: -5pt;*/
+    /*    -fx-border-color: black;
+        -fx-border-style: solid;
+        -fx-border-width: 0pt 0pt 1pt 0pt;
+        -fx-border-radius: 5pt;
+        -fx-border-insets: 5pt;*/
+}
+
+.tweetProfileImage {
+    /*    -fx-border-color: #060b33;
+        -fx-border-style: solid;*/
+    /*    -fx-border-width: 0pt 0pt 0pt 0pt;
+        -fx-border-radius: 2pt;
+        -fx-border-insets: 2pt;*/
+}
+
+.scheduleSession {
+    -fx-background-color: devoxx_gradient_opaque;
+    -fx-background-radius: 5;
+    -fx-hgap: 10pt;
+    -fx-vgap: 8pt;
+    -fx-alignment: top-left;
+    -fx-padding: 5pt;
+    -fx-opaque: 0.85;
+    -fx-grid-lines-visible: false;
+}
+
+.scheduleSession .room {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-weight: bold;
+    -fx-font-size: 14pt;
+}
+
+.scheduleSession .times {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-weight: normal;
+    -fx-font-size: 10pt;
+}
+
+.votedTalk .ratingAverageScore {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-weight: bold;
+    -fx-font-size: 14pt;
+}
+
+.votedTalk .ratingTotalVotes {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-weight: normal;
+    -fx-font-size: 10pt;
+}
+
+.scheduleSession > .sessionBottomPane > .centerFlow .emojiFlow {
+    -fx-fill: blanchedalmond;
+    -fx-font-size: 13pt;
+    -fx-font-weight: bold;
+}
+
+.votedTalk .emojiFlow {
+    -fx-fill: blanchedalmond;
+    -fx-font-size: 13pt;
+    -fx-font-weight: bold;
+}
+
+.scheduleSession .emojiFlow {
+    -fx-fill: blanchedalmond;
+    -fx-font-size: 13pt;
+    -fx-font-weight: bold;
+}
+
+.scheduleSession > .sessionTopPane > .speakerNames {
+    -fx-alignment: "top-right"
+}
+
+.votedTalk > .sessionTopPane > .speakerNames {
+    -fx-alignment: "top-right"
+}
+
+.scheduleSession > .sessionTopPane > .speakerNames > .speakerName {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-size: 11pt;
+}
+
+.votedTalk > .sessionTopPane > .speakerNames > .speakerName {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-size: 11pt;
+}
+
+.scheduleSession > .sessionTopPane > .speakerNames > .companyName {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-size: 8pt;
+}
+
+.scheduleSession .favoriteGlyph {
+    -glyph-name: "HEART";
+    -glyph-size: 10pt;
+    -fx-fill: blanchedalmond;
+}
+
+.scheduleSession .favoriteCount {
+    -fx-text-fill: blanchedalmond;
+    -fx-font-size: 10pt;
+}
+
+.schedule > .title {
+    -fx-background-color: devoxx_gradient_opaque;
+    -fx-background-radius: 10;
+    -fx-text-fill: blanchedalmond;
+    -fx-font-size: 20pt;
+    -fx-font-weight: bold;
+}
+
+.votedTalk > .title {
+    -fx-background-color: devoxx_gradient_opaque;
+    -fx-background-radius: 10;
+    -fx-text-fill: blanchedalmond;
+    -fx-font-size: 20pt;
+    -fx-font-weight: bold;
+}
+
+.scheduleSession .sessionBottomPane .centerFlow {
+    -fx-spacing: 3pt;
+}
+
+.scheduleSession .sessionBottomPane .centerFlow .tagPane .tags  {
+    -fx-hgap: 8pt;
+    -fx-vgap: 4pt;
+    -fx-padding: 0 0 0 4;
+}
+
+.scheduleSession .sessionBottomPane .centerFlow .tagPane .tags .tagLabel {
+    -fx-font-size: 9pt;
+    -fx-text-fill: blanchedalmond;
+ /*   -fx-text-fill: #e55630; */
+ /*   -fx-background-color: black; */
+    -fx-border-color: blanchedalmond;
+    -fx-border-radius: 5 0 5 0;
+    -fw-border-with: 2pt;
+    -fx-background-radius: 5 5 5 5;
+    -fx-border-insets: -1 -4 -1 -4;
+}
