@@ -1,12 +1,28 @@
 {
     "tweetwall": {
-        "query": "<YOUR_QUERY>",
-        "title": "The JavaFX Hallway Tweetwall for <YOUR_NAME_HERE>!",
+        "query": "#devoxx",
+        "title": "The JavaFX Hallway Tweetwall for Devoxx Belgium 2026!",
         "stylesheetResource": "tweetwall.css"
+    },
+
+    "configuration": {
+        "additionalConfigurationURLs": [
+            "https://raw.githubusercontent.com/mklaehn/TweetwallFX-Devoxx-2026-BE/refs/heads/conferenceConfig/configs/base/src/main/resources/tweetwallConfig_conference.json",
+            "https://raw.githubusercontent.com/mklaehn/TweetwallFX-Devoxx-2026-BE/refs/heads/conferenceConfig/configs/base/src/main/resources/tweetwallConfig_filters.json",
+            "https://raw.githubusercontent.com/mklaehn/TweetwallFX-Devoxx-2026-BE/refs/heads/conferenceConfig/configs/base/src/main/resources/tweetwallConfig_hallway.json"
+        ]
     },
 
     "stepEngine": {
         "steps": [
+            {
+                "stepClassName": "org.tweetwallfx.devoxx.base.stepengine.BackgroundSwitcher",
+                "config": {
+                    "backgrounds": [
+                        "backgrounds/DevoxxBE26-Poster-no-logos.png"
+                    ]
+                }
+            },
             {
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
                 "config": {

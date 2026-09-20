@@ -72,6 +72,7 @@ import org.tweetwallfx.util.ExpiringValue;
 
 public final class ConferenceClientImpl implements ConferenceClient, RatingClient {
 
+    private static final String NO_USER_IMAGE_URL = ConferenceClientImpl.class.getResource("/icons/user1-256x256.png").toExternalForm();
     private static final Logger LOG = LoggerFactory.getLogger(ConferenceClientImpl.class);
     private static final Set<DayOfWeek> CONFERENCE_DAYS = Set.of(
             DayOfWeek.MONDAY,
@@ -122,7 +123,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
 
     @Override
     public String getName() {
-        return "DEVOXX_XYZ";
+        return "DEVOXX_2026";
     }
 
     @Override
@@ -354,7 +355,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
         return RoomImpl.builder()
                 .withId(retrieveValue(input, "id", Number.class, Number::toString))
                 .withName(retrieveValue(input, "name", String.class))
-                .withCapacity(retrieveValue(input, "capacity", Number.class, Number::intValue))
+                .withCapacity(retrieveValueDefault(input, "capacity", Number.class, Number::intValue, 0))
                 .withWeight(retrieveValue(input, "weight", Number.class, Number::doubleValue))
                 .build();
     }
@@ -389,7 +390,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
                 .withDuration(retrieveValue(input, "duration", Number.class, n -> Duration.ofMinutes(n.longValue())))
                 .withId(retrieveValue(input, "id", Number.class, Number::toString))
                 .withName(retrieveValue(input, "name", String.class))
-                .withPause(retrieveValue(input, "pause", Boolean.class))
+                .withPause(retrieveValueDefault(input, "pause", Boolean.class, false))
                 .build();
     }
 
@@ -404,7 +405,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
                         retrieveValue(input, "firstName", String.class, String::trim),
                         retrieveValue(input, "lastName", String.class, String::trim)))
                 .withCompany(retrieveValue(input, "company", String.class, String::trim))
-                .withAvatarURL(retrieveValue(input, "imageUrl", String.class))
+                .withAvatarURL(retrieveValueDefault(input, "imageUrl", String.class, NO_USER_IMAGE_URL))
                 .withTalks(retrieveValue(input, "talks", List.class,
                         list -> ((List<?>) list).stream()
                                 .map(o -> (Map<String, Object>) o)
@@ -483,12 +484,22 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
         return type.cast(data.get(key));
     }
 
+    private static <T> T retrieveValueDefault(final Map<String, Object> data, final String key, final Class<T> type,
+            final T defaultValue) {
+        return type.cast(Objects.requireNonNullElse(data.get(key), defaultValue));
+    }
+
     private static <T, R> R retrieveValue(final Map<String, Object> data, final String key, final Class<T> type,
             final Function<T, R> converter) {
         final T t = retrieveValue(data, key, type);
         return null == t
                 ? null
                 : converter.apply(t);
+    }
+
+    private static <T, R> R retrieveValueDefault(final Map<String, Object> data, final String key, final Class<T> type,
+            final Function<T, R> converter, final R defaultValue) {
+        return Objects.requireNonNullElse(retrieveValue(data, key, type, converter), defaultValue);
     }
 
     private static <T> void processValue(final T value, final Predicate<T> filter, final Consumer<T> consumer) {
