@@ -68,6 +68,14 @@
         "count": 25
     },
 
+    "org.tweetwallfx.conference.impl.FlickrPhotoDataProvider$Config": {
+        "cacheSize": 2500,
+        "photosetTitleFilters": [
+            "Devoxx Belgium 2026",
+            "Devoxx Belgium 2025 - Day 3"
+        ]
+    },
+
     "org.tweetwallfx.google.vision.ImageContentFilterStep$Config": {
         "checkRetweeted": true,
         "adult": {

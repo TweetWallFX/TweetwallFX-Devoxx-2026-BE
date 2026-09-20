@@ -1,6 +1,6 @@
 {
     "conferenceClient": {
-        "eventBaseUri": "https://yourConference.cfp.dev/api/public",
-        "eventStatsBaseUri": "https://api.voxxr.in/api/events/yourConference"
+        "eventBaseUri": "https://dvbe26.cfp.dev/api/public",
+        "eventStatsBaseUri": "https://europe-west1-cfp-dev-mobile-app.cloudfunctions.net"
     }
 }

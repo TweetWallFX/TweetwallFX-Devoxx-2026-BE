@@ -1,19 +1,35 @@
 {
     "tweetwall": {
-        "query": "<YOUR_QUERY>",
-        "title": "The JavaFX Cinema Tweetwall for <YOUR_NAME_HERE>!",
+        "query": "#devoxx",
+        "title": "The JavaFX Cinema Tweetwall for Devoxx Belgium 2026!",
         "stylesheetResource": "tweetwall.css"
+    },
+
+    "configuration": {
+        "additionalConfigurationURLs": [
+            "https://raw.githubusercontent.com/mklaehn/TweetwallFX-Devoxx-2026-BE/refs/heads/conferenceConfig/configs/base/src/main/resources/tweetwallConfig_conference.json",
+            "https://raw.githubusercontent.com/mklaehn/TweetwallFX-Devoxx-2026-BE/refs/heads/conferenceConfig/configs/base/src/main/resources/tweetwallConfig_filters.json",
+            "https://raw.githubusercontent.com/mklaehn/TweetwallFX-Devoxx-2026-BE/refs/heads/conferenceConfig/configs/base/src/main/resources/tweetwallConfig_cinema.json"
+        ]
     },
 
     "stepEngine": {
         "steps": [
             {
+                "stepClassName": "org.tweetwallfx.devoxx.base.stepengine.BackgroundSwitcher",
+                "config": {
+                    "backgrounds": [
+                        "backgrounds/DevoxxBE26-Poster.png"
+                    ]
+                }
+            },
+            {
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 1860,
-                    "sessionHeight": 200,
+                    "sessionHeight": 190,
                     "showAvatar": true,
                     "avatarArcSize": 16,
                     "avatarSize": 60,
@@ -46,7 +62,7 @@
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowTopRated",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 800,
                     "talkHeight": 125,
                     "talkVGap": 5,
@@ -56,14 +72,15 @@
                 }
             },
             {
-                "stepClassName": "org.tweetwallfx.conference.impl.DevoxxPhotoSharingMosaicStep",
+                "stepClassName": "org.tweetwallfx.conference.impl.FlickrMosaicStep",
                 "config": {
                     "layoutX": 900,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 950,
-                    "height": 700,
-                    "columns": 3,
-                    "rows": 3,
+                    "height": 655,
+                    "numberOfImagesToChooseFrom": 1000,
+                    "columns": 5,
+                    "rows": 4,
                     "skipWhenSkipped": "TopRatedToday"
                 }
             },
@@ -74,23 +91,24 @@
                 }
             },
             {
-                "stepClassName": "org.tweetwallfx.conference.impl.DevoxxPhotoSharingMosaicStep",
+                "stepClassName": "org.tweetwallfx.conference.impl.FlickrMosaicStep",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 1860,
-                    "height": 700,
-                    "columns": 6,
-                    "rows": 3
+                    "height": 655,
+                    "numberOfImagesToChooseFrom": 1000,
+                    "columns": 9,
+                    "rows": 5
                 }
             },
             {
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 1860,
-                    "sessionHeight": 200,
+                    "sessionHeight": 190,
                     "showAvatar": true,
                     "avatarArcSize": 16,
                     "avatarSize": 60,
@@ -123,7 +141,7 @@
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowTopRated",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 800,
                     "talkHeight": 125,
                     "talkVGap": 5,
@@ -133,14 +151,15 @@
                 }
             },
             {
-                "stepClassName": "org.tweetwallfx.conference.impl.DevoxxPhotoSharingMosaicStep",
+                "stepClassName": "org.tweetwallfx.conference.impl.FlickrMosaicStep",
                 "config": {
                     "layoutX": 900,
-                    "layoutY": 165,
+                    "layoutY": 210,
                     "width": 950,
-                    "height": 700,
-                    "columns": 3,
-                    "rows": 3,
+                    "height": 655,
+                    "numberOfImagesToChooseFrom": 1000,
+                    "columns": 5,
+                    "rows": 4,
                     "skipWhenSkipped": "TopRatedWeek"
                 }
             },
