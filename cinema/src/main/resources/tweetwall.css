@@ -44,8 +44,13 @@
 
 .root {
     -fx-font-family: 'System';
-    devoxx_gradient: linear-gradient(to bottom right, #e55630, #f68b1f);
-    devoxx_gradient_opaque: linear-gradient(to bottom right, rgba(229, 86, 48, 0.85) , rgba(246, 139, 31, 0.85));
+    devoxx_background_dark: #e55630;
+    devoxx_background_light: #f68b1f;
+    devoxx_gradient: linear-gradient(to bottom right, devoxx_background_dark, devoxx_background_light);
+    /* reuse not support if openjfx for now */
+    devoxx_gradient_opaque_start: rgba(229, 86, 48, 0.85);
+    devoxx_gradient_opaque_end: rgba(246, 139, 31, 0.85);
+    devoxx_gradient_opaque: linear-gradient(to bottom right, devoxx_gradient_opaque_start, devoxx_gradient_opaque_end);
     devoxx_light_font_color: blanchedalmond;
     devoxx_dark_font_color: #060b33;
     devoxx_font_color: devoxx_light_font_color;
@@ -245,11 +250,18 @@
 }
 
 .votedTalk > .title {
-    -fx-background-color: devoxx_gradient_opaque;
     -fx-background-radius: 10;
     -fx-text-fill: blanchedalmond;
-    -fx-font-size: 20pt;
+    -fx-font-size: 18pt;
     -fx-font-weight: bold;
+}
+
+.votedTalk > .title.top {
+    -fx-background-color: devoxx_gradient_opaque;
+}
+
+.votedTalk > .title.left {
+    -fx-background-color: devoxx_gradient_opaque_start;
 }
 
 .scheduleSession .sessionBottomPane .centerFlow {

@@ -27,9 +27,9 @@
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 210,
+                    "layoutY": 240,
                     "width": 1860,
-                    "sessionHeight": 190,
+                    "sessionHeight": 175,
                     "showAvatar": true,
                     "avatarArcSize": 16,
                     "avatarSize": 60,
@@ -62,13 +62,16 @@
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowTopRated",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 210,
-                    "width": 800,
-                    "talkHeight": 125,
+                    "layoutY": 305,
+                    "width": 850,
+                    "titlePosition": "LEFT",
+                    "talkHeight": 106,
                     "talkVGap": 5,
                     "topVotedType": "TODAY",
                     "stepDuration": 500,
-                    "skipTokenValue": "TopRatedToday"
+                    "skipTokenValue": "TopRatedToday",
+                    "avatarSize": 48,
+                    "compressedAvatarsLimit": 5
                 }
             },
             {
@@ -76,8 +79,8 @@
                 "config": {
                     "layoutX": 900,
                     "layoutY": 210,
-                    "width": 950,
-                    "height": 655,
+                    "width": 1000,
+                    "height": 650,
                     "numberOfImagesToChooseFrom": 1000,
                     "columns": 5,
                     "rows": 4,
@@ -94,21 +97,21 @@
                 "stepClassName": "org.tweetwallfx.conference.impl.FlickrMosaicStep",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 210,
+                    "layoutY": 305,
                     "width": 1860,
-                    "height": 655,
+                    "height": 555,
                     "numberOfImagesToChooseFrom": 1000,
                     "columns": 9,
-                    "rows": 5
+                    "rows": 4
                 }
             },
             {
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowSchedule",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 210,
+                    "layoutY": 240,
                     "width": 1860,
-                    "sessionHeight": 190,
+                    "sessionHeight": 175,
                     "showAvatar": true,
                     "avatarArcSize": 16,
                     "avatarSize": 60,
@@ -141,13 +144,16 @@
                 "stepClassName": "org.tweetwallfx.conference.stepengine.steps.ShowTopRated",
                 "config": {
                     "layoutX": 35,
-                    "layoutY": 210,
-                    "width": 800,
-                    "talkHeight": 125,
+                    "layoutY": 305,
+                    "width": 850,
+                    "titlePosition": "LEFT",
+                    "talkHeight": 106,
                     "talkVGap": 5,
                     "topVotedType": "WEEK",
                     "stepDuration": 500,
-                    "skipTokenValue": "TopRatedWeek"
+                    "skipTokenValue": "TopRatedWeek",
+                    "avatarSize": 48,
+                    "compressedAvatarsLimit": 7
                 }
             },
             {
@@ -155,8 +161,8 @@
                 "config": {
                     "layoutX": 900,
                     "layoutY": 210,
-                    "width": 950,
-                    "height": 655,
+                    "width": 1000   ,
+                    "height": 650,
                     "numberOfImagesToChooseFrom": 1000,
                     "columns": 5,
                     "rows": 4,
