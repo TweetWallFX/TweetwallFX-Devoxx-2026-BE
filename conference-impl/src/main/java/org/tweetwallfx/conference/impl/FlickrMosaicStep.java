@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
@@ -160,7 +161,9 @@ public class FlickrMosaicStep implements Step {
                                         selectedImageStorage.getTimestamp()).abs())
                 )
                 .toList();
-        removedForTemporalCloseness.addAll(temporallyCloseImageStorages);
+        temporallyCloseImageStorages.stream()
+                .filter(Predicate.not(removedForTemporalCloseness::contains))
+                .forEach(removedForTemporalCloseness::add);
         distillingList.removeAll(temporallyCloseImageStorages);
 
         return selectedImageStorage;
