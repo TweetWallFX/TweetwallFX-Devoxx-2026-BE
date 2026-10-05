@@ -272,7 +272,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
                                 .getOptionalResponse(
                                         config.getEventStatsBaseUri() + "getAllRatingStats",
                                         Map.of(
-                                                "eventSlug", "dvbe25",
+                                                "eventSlug", "dvbe26",
                                                 "day", day.dayId(),
                                                 "token", config.getEventStatsToken()))
                                 .flatMap(r -> RestCallHelper.readOptionalFrom(r, map()))
