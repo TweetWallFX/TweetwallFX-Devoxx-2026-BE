@@ -82,6 +82,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
             DayOfWeek.FRIDAY
     );
 
+    private static final String EVENT_SLUG = "dvbe26";
     private final ConferenceClientSettings config;
     private final Map<String, SessionType> sessionTypes;
     private final Map<String, Room> rooms;
@@ -269,12 +270,15 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
                 .collect(Collectors.toMap(
                         Function.identity(),
                         day -> RestCallHelper
-                                .getOptionalResponse(
+                                .postOptionalResponse(
                                         config.getEventStatsBaseUri() + "getAllRatingStats",
-                                        Map.of(
-                                                "eventSlug", "dvbe26",
-                                                "day", day.dayId(),
-                                                "token", config.getEventStatsToken()))
+                                        Map.of(),
+                                        Entity.json(Map.of(
+                                                "data",
+                                                Map.of(
+                                                        "eventSlug", EVENT_SLUG,
+                                                        "day", day.dayId(),
+                                                        "token", config.getEventStatsToken()))))
                                 .flatMap(r -> RestCallHelper.readOptionalFrom(r, map()))
                                 .map(this::convertVotingResults)
                                 .orElseGet(List::of))))
@@ -290,7 +294,7 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
                                 Map.of(),
                                 Entity.json(Map.of(
                                         "data", Map.of(
-                                                "eventSlug", "dvbe25")))))
+                                                "eventSlug", EVENT_SLUG)))))
                 .flatMap(r -> RestCallHelper.readOptionalFrom(r, map()))
                 .map(this::convertTalksStats)
                 .orElseGet(Map::of);
@@ -309,11 +313,12 @@ public final class ConferenceClientImpl implements ConferenceClient, RatingClien
     @SuppressWarnings("unchecked")
     private List<RatedTalk> convertVotingResults(final Map<String, Object> input) {
         LOG.info("Converting VotingResults: {}", input);
-        return retrieveValue(input, "talkRatings", List.class,
-                talkRatings -> ((List<?>) talkRatings).parallelStream()
-                        .map(o -> (Map<String, Object>) o)
-                        .map(this::convertRatedTalk)
-                        .toList());
+        return retrieveValue(input, "result", Map.class,
+                result -> retrieveValue(result, "talkRatings", List.class,
+                        talkRatings -> ((List<?>) talkRatings).parallelStream()
+                                .map(o -> (Map<String, Object>) o)
+                                .map(this::convertRatedTalk)
+                                .toList()));
     }
 
     @SuppressWarnings("unchecked")
