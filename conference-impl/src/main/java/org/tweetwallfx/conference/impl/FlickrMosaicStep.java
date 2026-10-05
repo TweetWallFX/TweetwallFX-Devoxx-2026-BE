@@ -142,18 +142,42 @@ public class FlickrMosaicStep implements Step {
         });
     }
 
+    private ImageStorage getRandomImageStorage(final List<ImageStorage> distillingList, final List<ImageStorage> removedForTemporalCloseness) {
+        final java.time.Duration durationBetweenImages = config.getDurationBetweenImages();
+        final List<ImageStorage> selectionBase = distillingList.isEmpty()
+                ? removedForTemporalCloseness
+                : distillingList;
+        final int index = RANDOM.nextInt(selectionBase.size());
+        final ImageStorage selectedImageStorage = selectionBase.remove(index);
+
+        // remove ImageStorage objects that are temporally too close(within config.secondsBetweenImages) to the selectedImageStorage
+        final List<ImageStorage> temporallyCloseImageStorages = distillingList
+                .stream()
+                .filter(
+                        is -> 0 <= durationBetweenImages
+                                .compareTo(java.time.Duration.between(
+                                        is.getTimestamp(),
+                                        selectedImageStorage.getTimestamp()).abs())
+                )
+                .toList();
+        removedForTemporalCloseness.addAll(temporallyCloseImageStorages);
+        distillingList.removeAll(temporallyCloseImageStorages);
+
+        return selectedImageStorage;
+    }
+
     private Transition createMosaicTransition(final List<ImageStorage> imageStorages) {
         final SequentialTransition fadeIn = new SequentialTransition();
         final List<FadeTransition> allFadeIns = new ArrayList<>();
         final double width = (0 != config.width ? config.width : pane.getWidth()) / (double) config.columns - 10;
         final double height = (0 != config.height ? config.height : pane.getHeight()) / (double) config.rows - 8;
         final List<ImageStorage> distillingList = imageStorages; // mutable list required
+        final List<ImageStorage> removedForTemporalCloseness = new ArrayList<>();
         final Duration individualFadeInTransitionDuration = Duration.seconds(config.determineActualIndividualFadeInDuration());
 
         for (int i = 0; i < config.columns; i++) {
             for (int j = 0; j < config.rows; j++) {
-                int index = RANDOM.nextInt(distillingList.size());
-                Image selectedImage = distillingList.remove(index).getImage();
+                Image selectedImage = getRandomImageStorage(distillingList, removedForTemporalCloseness).getImage();
                 ImageView imageView = new ImageView(selectedImage);
                 imageView.setCache(true);
                 imageView.setCacheHint(CacheHint.SPEED);
@@ -348,6 +372,12 @@ public class FlickrMosaicStep implements Step {
             return minimumNumberOfImagesInCache > 0
                     ? minimumNumberOfImagesInCache
                     : countMosaicCells() + Math.max(columns, rows);
+        }
+
+        public int secondsBetweenImages = 20;
+
+        private java.time.Duration getDurationBetweenImages() {
+            return java.time.Duration.ofSeconds(secondsBetweenImages);
         }
 
         public int numberOfImagesToChooseFrom = -1;
