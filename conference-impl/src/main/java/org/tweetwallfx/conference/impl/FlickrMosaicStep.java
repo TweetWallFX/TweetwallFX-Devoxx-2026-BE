@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -38,8 +39,6 @@ import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.SequentialTransition;
 import javafx.animation.Transition;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
 import javafx.scene.CacheHint;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.Image;
@@ -47,8 +46,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tweetwallfx.controls.WordleSkin;
+import org.tweetwallfx.controls.mosaic.LayoutType;
+import org.tweetwallfx.controls.mosaic.MosaicArea;
+import org.tweetwallfx.controls.mosaic.MosaicItem;
+import org.tweetwallfx.controls.mosaic.MosaicItemSource;
+import org.tweetwallfx.controls.mosaic.MosaicLayouts;
+import org.tweetwallfx.controls.mosaic.MosaicTile;
 import org.tweetwallfx.stepengine.api.DataProvider;
 import org.tweetwallfx.stepengine.api.Step;
 import org.tweetwallfx.stepengine.api.StepEngine.MachineContext;
@@ -60,18 +66,34 @@ import org.tweetwallfx.transitions.SizeTransition;
 
 public class FlickrMosaicStep implements Step {
 
+    private static final Logger LOG = LoggerFactory.getLogger(FlickrMosaicStep.class);
+
+    /**
+     * Upper bound on the number of non-matching images decoded while looking
+     * for a requested orientation. Decoding is expensive, so a source that
+     * cannot satisfy the request gives up after this many probes instead of
+     * loading the entire pool.
+     */
+    private static final int MAX_ORIENTATION_SCAN = 128;
+
+    /**
+     * Multiplier applied to the mosaic cell count to size the image pool of the
+     * aspect preserving layouts. Justified and cover layouts mix orientations
+     * and need spare images so every band can be completed at the configured
+     * shape; the historic matrix layout keeps the exact configured count.
+     */
+    private static final int NON_MATRIX_POOL_FACTOR = 4;
+
     private final Config config;
     private static final Random RANDOM = new SecureRandom();
-    private final ImageView[][] rects;
-    private final Bounds[][] bounds;
+    private final List<ImageView> tiles = new ArrayList<>();
+    private final List<MosaicTile> mosaicTiles = new ArrayList<>();
     private final Set<Integer> highlightedIndexes = new HashSet<>();
     private Pane pane;
     private int count = 0;
 
     private FlickrMosaicStep(Config config) {
         this.config = config;
-        rects = new ImageView[config.columns][config.rows];
-        bounds = new Bounds[config.columns][config.rows];
     }
 
     @Override
@@ -106,12 +128,17 @@ public class FlickrMosaicStep implements Step {
     }
 
     private void executeAnimations(final MachineContext context) {
+        if (tiles.isEmpty()) {
+            context.proceed();
+            return;
+        }
+
         ImageWallAnimationTransition highlightAndZoomTransition
                 = createHighlightAndZoomTransition();
         highlightAndZoomTransition.transition.play();
         highlightAndZoomTransition.transition.setOnFinished(event1 -> {
             Transition revert
-                    = createReverseHighlightAndZoomTransition(highlightAndZoomTransition.column, highlightAndZoomTransition.row);
+                    = createReverseHighlightAndZoomTransition(highlightAndZoomTransition.tileIndex);
             revert.setDelay(Duration.seconds(3));
             revert.play();
             revert.setOnFinished(event -> {
@@ -121,19 +148,17 @@ public class FlickrMosaicStep implements Step {
                 } else {
                     count = 0;
                     ParallelTransition cleanup = new ParallelTransition();
-                    for (int i = 0; i < config.columns; i++) {
-                        for (int j = 0; j < config.rows; j++) {
-                            FadeTransition ft = new FadeTransition(Duration.seconds(0.5), rects[i][j]);
-                            ft.setToValue(0);
-                            cleanup.getChildren().addAll(ft);
-                        }
+                    for (final ImageView tile : tiles) {
+                        FadeTransition ft = new FadeTransition(Duration.seconds(0.5), tile);
+                        ft.setToValue(0);
+                        cleanup.getChildren().addAll(ft);
                     }
                     cleanup.setOnFinished(cleanUpDown -> {
-                        for (int i = 0; i < config.columns; i++) {
-                            for (int j = 0; j < config.rows; j++) {
-                                pane.getChildren().remove(rects[i][j]);
-                            }
+                        for (final ImageView tile : tiles) {
+                            pane.getChildren().remove(tile);
                         }
+                        tiles.clear();
+                        mosaicTiles.clear();
                         highlightedIndexes.clear();
                         context.proceed();
                     });
@@ -170,78 +195,71 @@ public class FlickrMosaicStep implements Step {
     }
 
     private Transition createMosaicTransition(final List<ImageStorage> imageStorages) {
+        tiles.clear();
+        mosaicTiles.clear();
+        highlightedIndexes.clear();
+
         final SequentialTransition fadeIn = new SequentialTransition();
         final List<FadeTransition> allFadeIns = new ArrayList<>();
-        final double width = (0 != config.width ? config.width : pane.getWidth()) / (double) config.columns - 10;
-        final double height = (0 != config.height ? config.height : pane.getHeight()) / (double) config.rows - 8;
-        final List<ImageStorage> distillingList = imageStorages; // mutable list required
-        final List<ImageStorage> removedForTemporalCloseness = new ArrayList<>();
         final Duration individualFadeInTransitionDuration = Duration.seconds(config.determineActualIndividualFadeInDuration());
+        final MosaicItemSource source = new LazyImageMosaicItemSource(imageStorages);
 
-        for (int i = 0; i < config.columns; i++) {
-            for (int j = 0; j < config.rows; j++) {
-                Image selectedImage = getRandomImageStorage(distillingList, removedForTemporalCloseness).getImage();
-                ImageView imageView = new ImageView(selectedImage);
-                imageView.setCache(true);
-                imageView.setCacheHint(CacheHint.SPEED);
-                imageView.setFitWidth(width);
-                imageView.setFitHeight(height);
-//                imageView.setEffect(new GaussianBlur(0));
-                rects[i][j] = imageView;
-                bounds[i][j] = new BoundingBox(i * (width + 10) + 5 + config.layoutX, j * (height + 8) + 4 + config.layoutY, width, height);
-                rects[i][j].setOpacity(0);
-                rects[i][j].setLayoutX(bounds[i][j].getMinX());
-                rects[i][j].setLayoutY(bounds[i][j].getMinY());
-                pane.getChildren().add(rects[i][j]);
-                FadeTransition ft = new FadeTransition(individualFadeInTransitionDuration, imageView);
-                ft.setToValue(1);
-                allFadeIns.add(ft);
-            }
+        for (final MosaicTile mosaicTile : MosaicLayouts.create(config.layoutType)
+                .layout(source, createMosaicArea())) {
+            final ImageView imageView = new ImageView((Image) mosaicTile.item().payload());
+            imageView.setCache(true);
+            imageView.setCacheHint(CacheHint.SPEED);
+            imageView.setFitWidth(mosaicTile.width());
+            imageView.setFitHeight(mosaicTile.height());
+            imageView.setOpacity(0);
+            imageView.setLayoutX(mosaicTile.x());
+            imageView.setLayoutY(mosaicTile.y());
+            tiles.add(imageView);
+            mosaicTiles.add(mosaicTile);
+            pane.getChildren().add(imageView);
+            FadeTransition ft = new FadeTransition(individualFadeInTransitionDuration, imageView);
+            ft.setToValue(1);
+            allFadeIns.add(ft);
         }
-        Collections.shuffle(allFadeIns);
+        Collections.shuffle(allFadeIns, RANDOM);
         fadeIn.getChildren().addAll(allFadeIns);
         return fadeIn;
     }
 
+    private MosaicArea createMosaicArea() {
+        final double areaWidth = 0 != config.width ? config.width : pane.getWidth();
+        final double areaHeight = 0 != config.height ? config.height : pane.getHeight();
+        return new MosaicArea(
+                Math.max(areaWidth, config.gapX + 1),
+                Math.max(areaHeight, config.gapY + 1),
+                config.layoutX,
+                config.layoutY,
+                config.gapX,
+                config.gapY,
+                config.columns,
+                config.rows);
+    }
+
     private ImageWallAnimationTransition createHighlightAndZoomTransition() {
-        // select next random not but not previously shown image
-        int index;
-        do {
-            index = RANDOM.nextInt(config.countMosaicCells());
-        } while (!highlightedIndexes.add(index));
-
-        int column = index % config.columns;
-        int row = index / config.columns;
-
-        ImageView randomView = rects[column][row];
+        final int tileIndex = selectHighlightIndex();
+        ImageView randomView = tiles.get(tileIndex);
         randomView.toFront();
         ParallelTransition firstParallelTransition = new ParallelTransition();
         ParallelTransition secondParallelTransition = new ParallelTransition();
 
-        for (int i = 0; i < config.columns; i++) {
-            for (int j = 0; j < config.rows; j++) {
-                if ((i == column) && (j == row)) {
-                    continue;
-                }
-                FadeTransition ft = new FadeTransition(Duration.seconds(1), rects[i][j]);
-                ft.setToValue(0.3);
-                firstParallelTransition.getChildren().add(ft);
+        for (int i = 0; i < tiles.size(); i++) {
+            if (i == tileIndex) {
+                continue;
             }
-        }
-        for (int i = 0; i < config.columns; i++) {
-            for (int j = 0; j < config.rows; j++) {
-                if ((i == column) && (j == row)) {
-                    continue;
-                }
+            ImageView otherView = tiles.get(i);
+            FadeTransition ft = new FadeTransition(Duration.seconds(1), otherView);
+            ft.setToValue(0.3);
+            firstParallelTransition.getChildren().add(ft);
 
-                GaussianBlur blur = (GaussianBlur) rects[i][j].getEffect();
-                if (null == blur) {
-                    blur = new GaussianBlur(0);
-                    rects[i][j].setEffect(blur);
-                }
-//                BlurTransition blurTransition = new BlurTransition(Duration.seconds(0.5), blur);
-//                blurTransition.setToRadius(10);
-//                secondParallelTransition.getChildren().addAll(blurTransition);
+            GaussianBlur blur = (GaussianBlur) otherView.getEffect();
+            if (null == blur) {
+                blur = new GaussianBlur(0);
+                otherView.setEffect(blur);
             }
         }
 
@@ -268,45 +286,54 @@ public class FlickrMosaicStep implements Step {
         SequentialTransition seqT = new SequentialTransition();
         seqT.getChildren().addAll(firstParallelTransition, secondParallelTransition);
 
-        firstParallelTransition.setOnFinished(event -> {
-//            DropShadow ds = new DropShadow();
-//            ds.setOffsetY(10.0);
-//            ds.setOffsetX(10.0);
-//            ds.setColor(Color.GRAY);
-//            randomView.setEffect(ds);
-        });
-
-        return new ImageWallAnimationTransition(seqT, column, row);
+        return new ImageWallAnimationTransition(seqT, tileIndex);
     }
 
-    private Transition createReverseHighlightAndZoomTransition(final int column, final int row) {
-        ImageView randomView = rects[column][row];
+    private int selectHighlightIndex() {
+        if (tiles.size() <= 1) {
+            return 0;
+        }
+
+        for (int attempt = 0; attempt < tiles.size(); attempt++) {
+            final int index = RANDOM.nextInt(tiles.size());
+
+            if (highlightedIndexes.add(index)) {
+                return index;
+            }
+        }
+
+        // every index has been highlighted already, start over
+        highlightedIndexes.clear();
+        final int index = RANDOM.nextInt(tiles.size());
+        highlightedIndexes.add(index);
+        return index;
+    }
+
+    private Transition createReverseHighlightAndZoomTransition(final int tileIndex) {
+        ImageView randomView = tiles.get(tileIndex);
         randomView.toFront();
         ParallelTransition firstParallelTransition = new ParallelTransition();
         ParallelTransition secondParallelTransition = new ParallelTransition();
 
-        for (int i = 0; i < config.columns; i++) {
-            for (int j = 0; j < config.rows; j++) {
-                if ((i == column) && (j == row)) {
-                    continue;
-                }
-                FadeTransition ft = new FadeTransition(Duration.seconds(1), rects[i][j]);
-                ft.setFromValue(0.3);
-                ft.setToValue(1.0);
-                firstParallelTransition.getChildren().add(ft);
+        for (int i = 0; i < tiles.size(); i++) {
+            if (i == tileIndex) {
+                continue;
             }
+            FadeTransition ft = new FadeTransition(Duration.seconds(1), tiles.get(i));
+            ft.setFromValue(0.3);
+            ft.setToValue(1.0);
+            firstParallelTransition.getChildren().add(ft);
         }
 
-        final double width = (0 != config.width ? config.width : pane.getWidth()) / (double) config.columns - 10;
-        final double height = (0 != config.height ? config.height : pane.getHeight()) / (double) config.rows - 8;
+        final MosaicTile mosaicTile = mosaicTiles.get(tileIndex);
 
         final SizeTransition zoomBox = new SizeTransition(Duration.seconds(config.resizeAndHighlightTransitionTime),
                 randomView.fitWidthProperty(), randomView.fitHeightProperty())
-                .withWidth(randomView.getLayoutBounds().getWidth(), width)
-                .withHeight(randomView.getLayoutBounds().getHeight(), height);
+                .withWidth(randomView.getLayoutBounds().getWidth(), mosaicTile.width())
+                .withHeight(randomView.getLayoutBounds().getHeight(), mosaicTile.height());
         final LocationTransition trans = new LocationTransition(Duration.seconds(config.resizeAndHighlightTransitionTime), randomView)
-                .withX(randomView.getLayoutX(), bounds[column][row].getMinX())
-                .withY(randomView.getLayoutY(), bounds[column][row].getMinY());
+                .withX(randomView.getLayoutX(), mosaicTile.x())
+                .withY(randomView.getLayoutY(), mosaicTile.y());
         secondParallelTransition.getChildren().addAll(trans, zoomBox);
 
         SequentialTransition seqT = new SequentialTransition();
@@ -318,16 +345,113 @@ public class FlickrMosaicStep implements Step {
         return seqT;
     }
 
+    private final class LazyImageMosaicItemSource implements MosaicItemSource {
+
+        private final List<MosaicItem> decoded = new ArrayList<>();
+        private final List<ImageStorage> distillingList = new ArrayList<>();
+        private final List<ImageStorage> removedForTemporalCloseness = new ArrayList<>();
+
+        private LazyImageMosaicItemSource(final List<ImageStorage> imageStorages) {
+            distillingList.addAll(imageStorages);
+            Collections.shuffle(distillingList, RANDOM);
+        }
+
+        @Override
+        public Optional<MosaicItem> next() {
+            while (true) {
+                if (!decoded.isEmpty()) {
+                    return Optional.of(decoded.remove(0));
+                }
+
+                final Optional<ImageStorage> storage = selectNext();
+
+                if (storage.isEmpty()) {
+                    return Optional.empty();
+                }
+
+                final Optional<MosaicItem> item = decode(storage.get());
+
+                if (item.isPresent()) {
+                    return item;
+                }
+            }
+        }
+
+        @Override
+        public Optional<MosaicItem> nextMatching(final Predicate<MosaicItem> predicate) {
+            for (int i = 0; i < decoded.size(); i++) {
+                if (predicate.test(decoded.get(i))) {
+                    return Optional.of(decoded.remove(i));
+                }
+            }
+
+            int scanned = 0;
+
+            while (scanned < MAX_ORIENTATION_SCAN) {
+                final Optional<ImageStorage> storage = selectNext();
+
+                if (storage.isEmpty()) {
+                    break;
+                }
+
+                final Optional<MosaicItem> candidate = decode(storage.get());
+
+                if (candidate.isEmpty()) {
+                    scanned++;
+                    continue;
+                }
+
+                if (predicate.test(candidate.get())) {
+                    return candidate;
+                }
+
+                decoded.add(candidate.get());
+                scanned++;
+            }
+
+            return Optional.empty();
+        }
+
+        @Override
+        public int remaining() {
+            return decoded.size() + distillingList.size() + removedForTemporalCloseness.size();
+        }
+
+        private Optional<ImageStorage> selectNext() {
+            if (distillingList.isEmpty() && removedForTemporalCloseness.isEmpty()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(getRandomImageStorage(distillingList, removedForTemporalCloseness));
+        }
+
+        private Optional<MosaicItem> decode(final ImageStorage storage) {
+            final Image image;
+
+            try {
+                image = storage.getImage();
+            } catch (final RuntimeException e) {
+                LOG.warn("Skipping image that failed to load", e);
+                return Optional.empty();
+            }
+
+            if (image == null || image.getWidth() <= 0 || image.getHeight() <= 0) {
+                LOG.warn("Skipping image without valid dimensions");
+                return Optional.empty();
+            }
+
+            return Optional.of(new MosaicItem(image.getWidth(), image.getHeight(), image));
+        }
+    }
+
     private static class ImageWallAnimationTransition {
 
         private final Transition transition;
-        private final int column;
-        private final int row;
+        private final int tileIndex;
 
-        private ImageWallAnimationTransition(final Transition transition, final int column, final int row) {
+        private ImageWallAnimationTransition(final Transition transition, final int tileIndex) {
             this.transition = transition;
-            this.column = column;
-            this.row = row;
+            this.tileIndex = tileIndex;
         }
     }
 
@@ -363,6 +487,9 @@ public class FlickrMosaicStep implements Step {
         public double height = 0D;
         public int columns = 6;
         public int rows = 5;
+        public LayoutType layoutType = LayoutType.MATRIX;
+        public double gapX = 10D;
+        public double gapY = 8D;
 
         private int countMosaicCells() {
             return columns * rows;
@@ -385,11 +512,20 @@ public class FlickrMosaicStep implements Step {
 
         public int numberOfImagesToChooseFrom = -1;
         public double numberOfImagesToChooseFromExtension = 1.4D;
+        public int maxNumberOfImagesToChooseFrom = -1;
 
         private int getNumberOfImagesToChooseFromCalculated() {
-            return numberOfImagesToChooseFrom > 0
+            if (maxNumberOfImagesToChooseFrom > 0) {
+                return maxNumberOfImagesToChooseFrom;
+            }
+
+            final int chosen = numberOfImagesToChooseFrom > 0
                     ? numberOfImagesToChooseFrom
                     : (int) (numberOfImagesToChooseFromExtension * countMosaicCells());
+
+            return layoutType == LayoutType.MATRIX
+                    ? chosen
+                    : Math.max(chosen, NON_MATRIX_POOL_FACTOR * countMosaicCells());
         }
 
         public double percentageForHighlightImage = 0.8D;
