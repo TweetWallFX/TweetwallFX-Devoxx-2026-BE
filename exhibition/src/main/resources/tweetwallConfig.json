@@ -105,7 +105,8 @@
                     "height": 700,
                     "numberOfImagesToChooseFrom": 1000,
                     "columns": 9,
-                    "rows": 5
+                    "rows": 5,
+                    "layoutType": "JUSTIFIED_ROWS"
                 }
             },
             {

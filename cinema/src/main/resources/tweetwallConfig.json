@@ -82,8 +82,9 @@
                     "width": 1000,
                     "height": 650,
                     "numberOfImagesToChooseFrom": 1000,
-                    "columns": 5,
-                    "rows": 4,
+                    "columns": 6,
+                    "rows": 5,
+                    "layoutType": "JUSTIFIED_ROWS",
                     "skipWhenSkipped": "TopRatedToday"
                 }
             },
@@ -101,8 +102,9 @@
                     "width": 1860,
                     "height": 555,
                     "numberOfImagesToChooseFrom": 1000,
-                    "columns": 9,
-                    "rows": 4
+                    "columns": 12,
+                    "rows": 5,
+                    "layoutType": "JUSTIFIED_ROWS"
                 }
             },
             {
@@ -164,8 +166,9 @@
                     "width": 1000   ,
                     "height": 650,
                     "numberOfImagesToChooseFrom": 1000,
-                    "columns": 5,
-                    "rows": 4,
+                    "columns": 6,
+                    "rows": 5,
+                    "layoutType": "JUSTIFIED_ROWS",
                     "skipWhenSkipped": "TopRatedWeek"
                 }
             },
