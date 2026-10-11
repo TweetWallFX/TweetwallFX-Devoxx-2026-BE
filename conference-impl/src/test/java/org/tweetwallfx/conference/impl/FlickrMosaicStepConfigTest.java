@@ -26,10 +26,16 @@ package org.tweetwallfx.conference.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.tweetwallfx.cache.URLContent;
 import org.tweetwallfx.controls.mosaic.LayoutType;
+import org.tweetwallfx.stepengine.dataproviders.ImageStorage;
 import org.tweetwallfx.util.JsonDataConverter;
 
 class FlickrMosaicStepConfigTest {
@@ -70,9 +76,85 @@ class FlickrMosaicStepConfigTest {
     }
 
     @Test
+    void parsesSelectionThresholdOptions() {
+        final FlickrMosaicStep.Config config = JsonDataConverter.convertFromString(
+                "{\"selectionThresholdPercentage\":0.75,\"selectionThresholdHours\":48}",
+                FlickrMosaicStep.Config.class);
+
+        assertThat(config.selectionThresholdPercentage).isEqualTo(0.75);
+        assertThat(config.selectionThresholdHours).isEqualTo(48L);
+    }
+
+    @Test
     void rejectsUnknownConfigOptions() {
         assertThatThrownBy(() -> JsonDataConverter.convertFromString(
                 "{\"layoutTypo\":\"COVER_GRID\"}", FlickrMosaicStep.Config.class))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void filtersImagesWhenThresholdMet() {
+        final FlickrMosaicStep.Config config = new FlickrMosaicStep.Config();
+        config.selectionThresholdPercentage = 0.6;
+        config.selectionThresholdHours = 24L;
+
+        final FlickrMosaicStep step = new FlickrMosaicStep(config);
+        final Instant now = Instant.parse("2026-10-11T12:00:00Z");
+
+        final ImageStorage recent1 = ImageStorage.builder(
+                now.minus(Duration.ofHours(2))).from(() -> URLContent.NO_CONTENT).build();
+        final ImageStorage recent2 = ImageStorage.builder(
+                now.minus(Duration.ofHours(10))).from(() -> URLContent.NO_CONTENT).build();
+        final ImageStorage oldImage = ImageStorage.builder(
+                now.minus(Duration.ofDays(5))).from(() -> URLContent.NO_CONTENT).build();
+
+        // 2 out of 3 = 66.7% >= 60%
+        final List<ImageStorage> images = List.of(recent1, recent2, oldImage);
+        final List<ImageStorage> filtered = step.filterImagesForMosaic(images, now);
+
+        assertThat(filtered).containsExactly(recent1, recent2);
+    }
+
+    @Test
+    void keepsAllImagesWhenThresholdNotMet() {
+        final FlickrMosaicStep.Config config = new FlickrMosaicStep.Config();
+        config.selectionThresholdPercentage = 0.8;
+        config.selectionThresholdHours = 24L;
+
+        final FlickrMosaicStep step = new FlickrMosaicStep(config);
+        final Instant now = Instant.parse("2026-10-11T12:00:00Z");
+
+        final ImageStorage recent1 = ImageStorage.builder(
+                now.minus(Duration.ofHours(2))).from(() -> URLContent.NO_CONTENT).build();
+        final ImageStorage oldImage1 = ImageStorage.builder(
+                now.minus(Duration.ofDays(2))).from(() -> URLContent.NO_CONTENT).build();
+        final ImageStorage oldImage2 = ImageStorage.builder(
+                now.minus(Duration.ofDays(5))).from(() -> URLContent.NO_CONTENT).build();
+
+        // 1 out of 3 = 33.3% < 80%
+        final List<ImageStorage> images = List.of(recent1, oldImage1, oldImage2);
+        final List<ImageStorage> filtered = step.filterImagesForMosaic(images, now);
+
+        assertThat(filtered).isSameAs(images);
+    }
+
+    @Test
+    void keepsAllImagesWhenDisabled() {
+        final FlickrMosaicStep.Config config = new FlickrMosaicStep.Config();
+        config.selectionThresholdPercentage = null;
+        config.selectionThresholdHours = 24L;
+
+        final FlickrMosaicStep step = new FlickrMosaicStep(config);
+        final Instant now = Instant.parse("2026-10-11T12:00:00Z");
+
+        final ImageStorage recent = ImageStorage.builder(
+                now.minus(Duration.ofHours(2))).from(() -> URLContent.NO_CONTENT).build();
+        final ImageStorage oldImage = ImageStorage.builder(
+                now.minus(Duration.ofDays(2))).from(() -> URLContent.NO_CONTENT).build();
+
+        final List<ImageStorage> images = List.of(recent, oldImage);
+        final List<ImageStorage> filtered = step.filterImagesForMosaic(images, now);
+
+        assertThat(filtered).isSameAs(images);
     }
 }

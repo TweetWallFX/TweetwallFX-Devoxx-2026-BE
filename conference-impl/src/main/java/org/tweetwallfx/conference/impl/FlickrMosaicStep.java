@@ -24,6 +24,7 @@
 package org.tweetwallfx.conference.impl;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -92,7 +93,7 @@ public class FlickrMosaicStep implements Step {
     private Pane pane;
     private int count = 0;
 
-    private FlickrMosaicStep(Config config) {
+    FlickrMosaicStep(Config config) {
         this.config = config;
     }
 
@@ -113,13 +114,39 @@ public class FlickrMosaicStep implements Step {
         WordleSkin wordleSkin = (WordleSkin) context.get("WordleSkin");
         FlickrPhotoDataProvider dataProvider = context.getDataProvider(FlickrPhotoDataProvider.class);
         pane = wordleSkin.getPane();
-        Transition createMosaicTransition = createMosaicTransition(dataProvider
+        Transition createMosaicTransition = createMosaicTransition(filterImagesForMosaic(dataProvider
                 .getAccess()
-                .getImages(config.getNumberOfImagesToChooseFromCalculated()));
+                .getImages(config.getNumberOfImagesToChooseFromCalculated())));
         createMosaicTransition.setOnFinished(event
                 -> executeAnimations(context));
 
         createMosaicTransition.play();
+    }
+
+    List<ImageStorage> filterImagesForMosaic(final List<ImageStorage> images) {
+        return filterImagesForMosaic(images, Instant.now());
+    }
+
+    List<ImageStorage> filterImagesForMosaic(final List<ImageStorage> images, final Instant now) {
+        if (config.selectionThresholdPercentage == null || config.selectionThresholdHours == null || images.isEmpty()) {
+            return images;
+        }
+
+        final Instant cutoff = now.minus(java.time.Duration.ofHours(config.selectionThresholdHours));
+        final List<ImageStorage> withinDuration = images.stream()
+                .filter(is -> is.getTimestamp().isAfter(cutoff))
+                .toList();
+
+        final double ratio = (double) withinDuration.size() / images.size();
+        if (ratio >= config.selectionThresholdPercentage) {
+            LOG.info("Selection threshold met ({}/{} = {} >= {} within {} hours). Restricting to recent images.",
+                    withinDuration.size(), images.size(), ratio, config.selectionThresholdPercentage, config.selectionThresholdHours);
+            return new ArrayList<>(withinDuration);
+        }
+
+        LOG.info("Selection threshold not met ({}/{} = {} < {} within {} hours). Using all available selection images.",
+                withinDuration.size(), images.size(), ratio, config.selectionThresholdPercentage, config.selectionThresholdHours);
+        return images;
     }
 
     @Override
@@ -529,6 +556,8 @@ public class FlickrMosaicStep implements Step {
         }
 
         public double percentageForHighlightImage = 0.8D;
+        public Double selectionThresholdPercentage = null;
+        public Long selectionThresholdHours = null;
         public double resizeAndHighlightTransitionTime = 2.5D;
         public int numberOfHighlights = 3;
 
